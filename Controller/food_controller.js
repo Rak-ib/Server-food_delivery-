@@ -53,8 +53,9 @@ const food_image_remove=async(req,res)=>{
 
 const food_list=async(req,res)=>{
     try {
+        console.log("foodlist");
         const result=await food.find();
-        // console.log(result);
+        console.log(result);
         res.json({message:result})
 
     } catch (error) {
