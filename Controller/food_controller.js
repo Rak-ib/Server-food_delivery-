@@ -31,7 +31,7 @@ const addFood = async (req, res) => {
             return;
         }
         const result = await foodItem.save();
-        console.log(result);
+        //console.log(result);
         res.json({success:true,message:"Food added successfully"});
     } catch (error) {
         console.log(error);
@@ -53,13 +53,13 @@ const food_image_remove=async(req,res)=>{
 
 const food_list=async(req,res)=>{
     try {
-        console.log("foodlist");
+       // console.log("foodlist");
         const result=await food.find();
-        console.log(result);
+        //console.log(result);
         res.json({message:result})
 
     } catch (error) {
-        console.log("error",error);
+        //console.log("error",error);
         res.send(error)
     }
 }

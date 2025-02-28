@@ -71,6 +71,8 @@ const verifyOrder=async(req,res)=>{
 const userOrder=async(req,res)=>{
     try {
         const result=await Order.find({userId:req.user.userId});
+        console.log("user Oreder");
+        console.log(result);
         res.json({success:true,order:result})
     } catch (error) {
         res.json({success:false,message:"Error"})
