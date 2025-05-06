@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); 
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const User = require('../Modals/userModel');
@@ -56,8 +56,8 @@ const register = async (req, res) => {
         if (!validator.isEmail(email)) {
             return res.json({ message: "Invalid Email", success: false })
         }
-        const salt = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash(password, salt);
+        // const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
             userName: userName,
             email: email,
