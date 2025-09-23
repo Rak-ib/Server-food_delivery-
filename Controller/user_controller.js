@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const User = require('../Modals/userModel');
+const verifyGoogleToken = require("../utils/googleVerify");
 require('dotenv').config();
 
 
@@ -16,30 +17,34 @@ const login = async (req, res) => {
             if (!passwordCompare) {
                 return res.json({ message: "password didn't match", success: false });
             }
-            console.log('from login ',user.name);
+            // console.log('from login ',user.userName);
             const userObject = {
                 userName: user.userName,
                 userId: user._id,
                 email: user.email,
-                avatar: user.image || null,
+                role: user.role,
+                image: user.image || null,
             };
-            const token = jwt.sign(userObject, process.env.JWT_SECRETE, {
-                expiresIn: 86400000
-            })
-            res.cookie("learn_with_rakib", token, {
+            const token = jwt.sign(userObject, process.env.JWT_SECRET, {
+                expiresIn: '24h'
+            });
+            res.cookie(process.env.COOKIE_NAME, token, {
                 maxAge: 86400000,
                 httpOnly: true,
-                signed: true,
-            })
+                secure: process.env.NODE_ENV !== 'development', // true in production
+                sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+                signed: true
+            });
             res.status(200).json({ message: "Login successful", success: true, user });
         } else {
+            console.log("error sss",error);
             return res.json({ message: "user not found", success: false })
         }
     } catch (error) {
+        console.log("error",error);
         res.json({ message: error.data, success: false })
     }
 }
-
 
 
 const register = async (req, res) => {
@@ -64,10 +69,13 @@ const register = async (req, res) => {
             password: hashPassword,
             image: image,
         })
-        await newUser.save();
+
+        const result =await newUser.save();
+        console.log("okay ", result)
         res.json({ message: "Account created", success: true })
 
     } catch (error) {
+        console.log("error",error)
         res.json({ message: error, success: false })
     }
 }
@@ -91,13 +99,13 @@ const currentUser=async(req,res)=>{
         if(cookies){
             try {
                 const token=cookies[process.env.COOKIE_NAME]
-                const decode=jwt.verify(token,process.env.JWT_SECRETE)
+                const decode=jwt.verify(token,process.env.JWT_SECRET)
                 const user=decode;
                 res.json({success:true,user})
 
     
             } catch (error) {
-                console.log("error",error); 
+                // console.log("error",error); 
                 res.json({success:false,message:"login again"})
             }
         }else{
@@ -111,4 +119,52 @@ const currentUser=async(req,res)=>{
 
 
 
-module.exports = { login, register,logout,currentUser }
+
+const googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+    const googleUser = await verifyGoogleToken(token);
+
+    let user = await User.findOne({ email: googleUser.email });
+    if (!user) {
+      user = await User.create({
+        email: googleUser.email,
+        userName: googleUser.name,
+        googleId: googleUser.googleId,
+        image: googleUser.picture,
+        role: 'user',
+      });
+    }
+
+    const userObject = {
+                userName: user.userName,
+                userId: user._id,
+                email: user.email,
+                role: user.role||'user',
+                image: user.image || null,
+            };
+    const jwtToken = jwt.sign(userObject, process.env.JWT_SECRET, {
+        expiresIn: '24h'
+    });
+    res.cookie(process.env.COOKIE_NAME, jwtToken, { 
+        httpOnly: true, 
+        secure: true,
+        maxAge: 86400000,
+        signed: true
+     });
+    res.status(200).json({ message: "Google Login successful", success: true, user });
+  } catch (err) {
+    res.status(500).json({ message: "Google login failed", error: err.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+module.exports = { login, register,logout,currentUser,googleLogin }

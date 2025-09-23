@@ -11,12 +11,18 @@ const UserSchema=mongoose.Schema({
         required:true,
         unique:true,
     },
-    password:{
-        type:String,
-        required:true,
+    password: {
+        type: String,
+        required: false,   
     },
-    image:{
-        type:String
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+    googleId: {           
+        type: String,
+        unique: true,
+        sparse: true       // avoids errors if some users don’t have googleId
+    },
+    image: {
+        type: String
     },
     cartData:{
         type:Object,

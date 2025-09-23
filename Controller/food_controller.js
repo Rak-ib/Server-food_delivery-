@@ -16,7 +16,7 @@ cloudinary.config({
 
 
 const addFood = async (req, res) => {
-    console.log("hello");
+    // console.log("hello");
     const { name, description, price, category, image } = req.body;
     // console.log("name",name,"description",description,price, category,"  imag",image);
     const foodItem = new food({name,description,price,category,image
@@ -45,7 +45,7 @@ const food_image_remove=async(req,res)=>{
 
     try {
         const result = await cloudinary.uploader.destroy(public_id);
-        res.json(result);
+        // res.json(result);
     } catch (error) {
         res.status(500).json({ message: 'Failed to delete image', error });
     }
@@ -53,13 +53,13 @@ const food_image_remove=async(req,res)=>{
 
 const food_list=async(req,res)=>{
     try {
-       // console.log("foodlist");
+    //    console.log("foodlist");
         const result=await food.find();
-        //console.log(result);
+        // console.log(result);
         res.json({message:result})
 
     } catch (error) {
-        //console.log("error",error);
+        console.log("error",error);
         res.send(error)
     }
 }
@@ -67,7 +67,7 @@ const food_list=async(req,res)=>{
 const remove_food=async(req,res)=>{
     try {
         const result=await food.findByIdAndDelete(req.params.id);
-        console.log(req.params.id);
+        // console.log(req.params.id);
         res.json({message:"Food item deleted",success:true})
     } catch (error) {
         res.json({message:"Failed to deleted",success:false})
