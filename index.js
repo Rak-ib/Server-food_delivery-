@@ -47,86 +47,160 @@
 
 
 
+
+// index.js
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-require('dotenv').config();
-const { connect } = require('./Config/db.js');
-const foodRoute = require('./Routes/foodRoute.js');
-const userRoute = require('./Routes/userRoute.js');
-const cartRoute = require('./Routes/cartRoute.js');
-const orderRoute = require('./Routes/orderRoute.js');
 
 const app = express();
 
-// Database Connection
-connect();
-
-// Middleware
+// Basic middleware first
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS Configuration - flexible for development and production
-const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        const allowedOrigins = [
-            process.env.CLIENT_URL,
-            process.env.FRONTEND_URL,
-            'http://localhost:3000',
-            'http://localhost:5173',
-            'http://localhost:5174'
-            // Add your frontend Vercel URL here once deployed
-            // 'https://your-frontend-domain.vercel.app'
-        ].filter(Boolean); // Remove any undefined values
-        
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.log('Blocked by CORS:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+// CORS Configuration
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-};
-
-app.use(cors(corsOptions));
+}));
 
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// Routes
-app.use("/food", foodRoute);
-app.use("/user", userRoute);
-app.use("/cart", cartRoute);
-app.use("/order", orderRoute);
-
-// Default Route
+// Test route - works without database
 app.get("/", (req, res) => {
     res.json({
         message: "Food Delivery API is running!",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Database connection with proper error handling
+let dbConnected = false;
+const initializeDatabase = async () => {
+    try {
+        const { connect } = require('./Config/db.js');
+        await connect();
+        dbConnected = true;
+        console.log('✅ Database initialized successfully');
+    } catch (error) {
+        console.error('❌ Database initialization failed:', error.message);
+        dbConnected = false;
+        // Don't crash the app, continue without database
+    }
+};
+
+// Initialize database
+initializeDatabase();
+
+// Routes with error handling
+try {
+    const foodRoute = require('./Routes/foodRoute.js');
+    const userRoute = require('./Routes/userRoute.js');
+    const cartRoute = require('./Routes/cartRoute.js');
+    const orderRoute = require('./Routes/orderRoute.js');
+
+    app.use("/food", foodRoute);
+    app.use("/user", userRoute);
+    app.use("/cart", cartRoute);
+    app.use("/order", orderRoute);
+    
+    console.log('✅ All routes loaded successfully');
+} catch (error) {
+    console.error('❌ Error loading routes:', error.message);
+    
+    // Fallback routes for debugging
+    app.get("/food", (req, res) => {
+        res.status(503).json({ error: "Food routes not available", message: error.message });
+    });
+    app.get("/user", (req, res) => {
+        res.status(503).json({ error: "User routes not available", message: error.message });
+    });
+    app.get("/cart", (req, res) => {
+        res.status(503).json({ error: "Cart routes not available", message: error.message });
+    });
+    app.get("/order", (req, res) => {
+        res.status(503).json({ error: "Order routes not available", message: error.message });
+    });
+}
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+    res.json({
+        status: "OK",
+        service: "Food Delivery API",
+        database: dbConnected ? "Connected" : "Disconnected",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// API info endpoint
+app.get("/api", (req, res) => {
+    res.json({
+        message: "Food Delivery API",
+        version: "1.0.0",
+        endpoints: {
+            health: "/health",
+            food: "/food",
+            user: "/user", 
+            cart: "/cart",
+            order: "/order"
+        },
+        database: dbConnected ? "Connected" : "Disconnected",
         timestamp: new Date().toISOString()
     });
 });
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-    res.json({ status: "OK", service: "Food Delivery API" });
+// Global error handling middleware
+app.use((error, req, res, next) => {
+    console.error('🚨 Global Error:', error.message);
+    console.error('Stack:', error.stack);
+    
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'production' ? 'Something went wrong!' : error.message,
+        timestamp: new Date().toISOString(),
+        path: req.path
+    });
 });
 
-// Export for Vercel
+// 404 handler for undefined routes
+app.use('*', (req, res) => {
+    res.status(404).json({
+        error: 'Route not found',
+        message: `Cannot ${req.method} ${req.originalUrl}`,
+        availableRoutes: ['/health', '/api', '/food', '/user', '/cart', '/order'],
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Export the Express app for Vercel
 module.exports = app;
 
-// Only run server locally
+// Only start server in local development
 if (process.env.NODE_ENV !== "production") {
     const port = process.env.PORT || 5000;
     app.listen(port, () => {
-        console.log(`App is running on port ${port}`);
+        console.log(`🚀 Server running on port ${port}`);
+        console.log(`📡 Health check: http://localhost:${port}/health`);
+        console.log(`📋 API info: http://localhost:${port}/api`);
     });
 }
+
+
+
+
+
+
 
 
 
