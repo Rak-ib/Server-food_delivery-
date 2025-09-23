@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 // Remove validator import and use custom validation instead
 const jwt = require('jsonwebtoken');
 const User = require('../Modals/userModel');
-const verifyGoogleToken = require("../utils/googleVerify");
+const verifyGoogleToken = require("../Utils/googleVerify");
 require('dotenv').config();
 
 // Custom validation functions to replace validator
