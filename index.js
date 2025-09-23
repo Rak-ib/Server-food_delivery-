@@ -1,49 +1,49 @@
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const { connect } = require('./Config/db.js');
-const foodRoute = require('./Routes/foodRoute.js');
-const userRoute = require('./Routes/userRoute.js');
-const cartRoute = require('./Routes/cartRoute.js');
-const orderRoute = require('./Routes/orderRoute.js');
+// const express = require('express');
+// const cors = require('cors');
+// const cookieParser = require('cookie-parser');
+// const { connect } = require('./Config/db.js');
+// const foodRoute = require('./Routes/foodRoute.js');
+// const userRoute = require('./Routes/userRoute.js');
+// const cartRoute = require('./Routes/cartRoute.js');
+// const orderRoute = require('./Routes/orderRoute.js');
 
-const app = express();
+// const app = express();
 
-// Middleware
-app.use(express.json());
-
+// // Middleware
 // app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // ← THIS IS CRUCIAL FOR SSLCOMMERZ
-app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}));
-app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// Database Connection
-connect();
+// // app.use(express.json());
+// app.use(express.urlencoded({ extended: true })); // ← THIS IS CRUCIAL FOR SSLCOMMERZ
+// app.use(cors({
+//     origin: process.env.CLIENT_URL || 'http://localhost:5173',
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+// }));
+// app.use(cookieParser(process.env.COOKIE_SECRET));
 
-// Routes
-app.use("/food", foodRoute);
-app.use("/user", userRoute);
-app.use("/cart", cartRoute);
-app.use("/order", orderRoute);
-// Default Route
-app.get("/", (req, res) => {
-    res.send("Food Delivery API is running!");
-});
+// // Database Connection
+// connect();
 
-// Export the Express app (required for Vercel)
-module.exports = app;
+// // Routes
+// app.use("/food", foodRoute);
+// app.use("/user", userRoute);
+// app.use("/cart", cartRoute);
+// app.use("/order", orderRoute);
+// // Default Route
+// app.get("/", (req, res) => {
+//     res.send("Food Delivery API is running!");
+// });
 
-if (process.env.NODE_ENV !== "production") {
-    const port = process.env.PORT || 5000;
-    app.listen(port, () => {
-        console.log(`App is running on port ${port}`);
-    });
-}
+// // Export the Express app (required for Vercel)
+// module.exports = app;
+
+// if (process.env.NODE_ENV !== "production") {
+//     const port = process.env.PORT || 5000;
+//     app.listen(port, () => {
+//         console.log(`App is running on port ${port}`);
+//     });
+// }
 
 
 
@@ -237,3 +237,137 @@ if (process.env.NODE_ENV !== "production") {
 //     "validator": "^13.12.0"
 //   }
 // }
+// {
+//   "name": "food-delivery-server",
+//   "version": "1.0.0",
+//   "description": "",
+//   "main": "index.js",
+//   "scripts": {
+//     "preinstall": "npx npm-force-resolutions",
+//     "start": "node index.js",
+//     "dev": "nodemon index.js",
+//     "vercel-build": "echo 'Building for Vercel'"
+//   },
+//   "keywords": [],
+//   "author": "",
+//   "license": "ISC",
+//   "dependencies": {
+//     "@vercel/node": "^3.2.0",
+//     "axios": "^1.11.0",
+//     "bcryptjs": "^3.0.2",
+//     "body-parser": "^1.20.2",
+//     "cloudinary": "^2.2.0",
+//     "cookie-parser": "^1.4.6",
+//     "cors": "^2.8.5",
+//     "dotenv": "^16.4.5",
+//     "express": "^4.19.2",
+//     "google-auth-library": "^10.3.0",
+//     "jsonwebtoken": "^9.0.2",
+//     "mongoose": "^8.5.0",
+//     "multer": "^1.4.5-lts.1",
+//     "stripe": "^16.4.0",
+//     "validator": "^13.12.0"
+//   },
+//   "resolutions": {
+//     "gopd": "1.0.2",
+//     "get-intrinsic": "1.1.1",
+//     "side-channel": "1.0.5"
+//   },
+//   "devDependencies": {
+//     "npm-force-resolutions": "^0.0.10"
+//   }
+// }
+
+
+
+
+// Load environment variables first
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const { connect } = require('./Config/db.js');
+
+// Import routes
+const foodRoute = require('./Routes/foodRoute.js');
+const userRoute = require('./Routes/userRoute.js');
+const cartRoute = require('./Routes/cartRoute.js');
+const orderRoute = require('./Routes/orderRoute.js');
+
+const app = express();
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// CORS configuration
+const corsOptions = {
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        process.env.CLIENT_URL,
+        process.env.FRONTEND_URL
+    ].filter(Boolean), // Remove undefined values
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+};
+
+app.use(cors(corsOptions));
+app.use(cookieParser(process.env.COOKIE_SECRET));
+
+// Health check route (should be before database connection)
+app.get("/", (req, res) => {
+    res.json({ 
+        message: "Food Delivery API is running!",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Connect to database and set up routes
+const setupApp = async () => {
+    try {
+        // Connect to database
+        await connect();
+        
+        // Routes
+        app.use("/food", foodRoute);
+        app.use("/user", userRoute);
+        app.use("/cart", cartRoute);
+        app.use("/order", orderRoute);
+        
+        // Error handling middleware
+        app.use((err, req, res, next) => {
+            console.error('Error:', err);
+            res.status(500).json({ 
+                error: 'Internal Server Error',
+                message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+            });
+        });
+
+        // 404 handler
+        app.use((req, res) => {
+            res.status(404).json({ error: 'Route not found' });
+        });
+
+    } catch (error) {
+        console.error('Failed to setup app:', error);
+        // Don't exit process in serverless environment
+    }
+};
+
+// Initialize the app
+setupApp();
+
+// Export the Express app (required for Vercel)
+module.exports = app;
+
+// Only listen to port in development
+if (require.main === module && process.env.NODE_ENV !== "production") {
+    const port = process.env.PORT || 5000;
+    app.listen(port, () => {
+        console.log(`App is running on port ${port}`);
+    });
+}
