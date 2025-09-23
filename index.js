@@ -318,48 +318,17 @@ app.use(cors(corsOptions));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 // Health check route (should be before database connection)
+connect();
+
+// Routes
+app.use("/food", foodRoute);
+app.use("/user", userRoute);
+app.use("/cart", cartRoute);
+app.use("/order", orderRoute);
+// Default Route
 app.get("/", (req, res) => {
-    res.json({ 
-        message: "Food Delivery API is running!",
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-    });
+    res.send("Food Delivery API is running!");
 });
-
-// Connect to database and set up routes
-const setupApp = async () => {
-    try {
-        // Connect to database
-        await connect();
-        
-        // Routes
-        app.use("/food", foodRoute);
-        app.use("/user", userRoute);
-        app.use("/cart", cartRoute);
-        app.use("/order", orderRoute);
-        
-        // Error handling middleware
-        app.use((err, req, res, next) => {
-            console.error('Error:', err);
-            res.status(500).json({ 
-                error: 'Internal Server Error',
-                message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-            });
-        });
-
-        // 404 handler
-        app.use((req, res) => {
-            res.status(404).json({ error: 'Route not found' });
-        });
-
-    } catch (error) {
-        console.error('Failed to setup app:', error);
-        // Don't exit process in serverless environment
-    }
-};
-
-// Initialize the app
-setupApp();
 
 // Export the Express app (required for Vercel)
 module.exports = app;
