@@ -40,7 +40,7 @@ const login = async (req, res) => {
                 maxAge: 86400000,
                 httpOnly: true,
                 sameSite: 'none',
-                secure: true
+                // signed: true,
             });
             res.status(200).json({ message: "Login successful", success: true, user });
         } else {
@@ -98,7 +98,7 @@ const logout = (req, res) => {
     try {
         res.clearCookie("learn_with_rakib", {
             httpOnly: true,
-            signed: true,
+            // signed: true,
             sameSite: 'none',
         });
         res.status(200).json({ message: "Logout successful", success: true });
@@ -156,9 +156,9 @@ const googleLogin = async (req, res) => {
         });
         res.cookie(process.env.COOKIE_NAME, jwtToken, {
             httpOnly: true,
-            secure: true,
             maxAge: 86400000,
             sameSite: 'none',
+            // signed: true,
         });
         res.status(200).json({ message: "Google Login successful", success: true, user });
     } catch (err) {
