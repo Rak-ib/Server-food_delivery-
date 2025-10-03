@@ -37,10 +37,11 @@ const login = async (req, res) => {
                 expiresIn: '24h'
             });
             res.cookie(process.env.COOKIE_NAME, token, {
-                maxAge: 86400000,
+                maxAge: 86400000, // 24 hours
                 httpOnly: true,
-                sameSite: 'none',
-                // signed: true,
+                secure: true, // REQUIRED for HTTPS
+                sameSite: 'none', // REQUIRED for cross-site cookies
+                domain: '.vercel.app', // Allow all vercel subdomains
             });
             res.status(200).json({ message: "Login successful", success: true, user });
         } else {
@@ -98,8 +99,9 @@ const logout = (req, res) => {
     try {
         res.clearCookie("learn_with_rakib", {
             httpOnly: true,
-            // signed: true,
+            secure: true,
             sameSite: 'none',
+            domain: '.vercel.app',
         });
         res.status(200).json({ message: "Logout successful", success: true });
     } catch (error) {
@@ -157,8 +159,9 @@ const googleLogin = async (req, res) => {
         res.cookie(process.env.COOKIE_NAME, jwtToken, {
             httpOnly: true,
             maxAge: 86400000,
-            sameSite: 'none',
-            // signed: true,
+            secure: true, // REQUIRED for HTTPS
+            sameSite: 'none', // REQUIRED for cross-site cookies
+            domain: '.vercel.app', // Allow all vercel subdomains
         });
         res.status(200).json({ message: "Google Login successful", success: true, user });
     } catch (err) {
