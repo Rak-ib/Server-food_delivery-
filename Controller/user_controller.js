@@ -41,7 +41,7 @@ const login = async (req, res) => {
                 httpOnly: true,
                 secure: true, // REQUIRED for HTTPS
                 sameSite: 'none', // REQUIRED for cross-site cookies
-                domain: '.vercel.app', // Allow all vercel subdomains
+                // domain: '.vercel.app', // Allow all vercel subdomains
             });
             res.status(200).json({ message: "Login successful", success: true, user });
         } else {
@@ -161,7 +161,7 @@ const googleLogin = async (req, res) => {
             maxAge: 86400000,
             secure: true, // REQUIRED for HTTPS
             sameSite: 'none', // REQUIRED for cross-site cookies
-            domain: '.vercel.app', // Allow all vercel subdomains
+            // domain: '.vercel.app', // Allow all vercel subdomains
         });
         res.status(200).json({ message: "Google Login successful", success: true, user });
     } catch (err) {
