@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 // Remove validator import and use custom validation instead
 const jwt = require('jsonwebtoken');
 const User = require('../Modals/userModel');
@@ -37,11 +37,11 @@ const login = async (req, res) => {
                 expiresIn: '24h'
             });
             res.cookie(process.env.COOKIE_NAME, token, {
-                maxAge: 86400000, // 24 hours
+                maxAge: 86400000,
                 httpOnly: true,
-                secure: true, // REQUIRED for HTTPS
-                sameSite: 'none', // REQUIRED for cross-site cookies
-                // domain: '.vercel.app', // Allow all vercel subdomains
+                secure: process.env.NODE_ENV === 'production', // Dynamic based on environment
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                path: '/',
             });
             res.status(200).json({ message: "Login successful", success: true, user });
         } else {
@@ -59,24 +59,24 @@ const register = async (req, res) => {
         const { userName, email, password, image } = req.body;
         const userExist = await User.findOne({ userName: userName });
         const emailExist = await User.findOne({ email: email });
-        
+
         if (emailExist) {
             return res.json({ message: "email already exist try new one", success: false })
         }
         if (userExist) {
             return res.json({ message: "Username already taken", success: false })
         }
-        
+
         // Replace validator.isEmail with custom validation
         if (!isValidEmail(email)) {
             return res.json({ message: "Invalid Email", success: false })
         }
-        
+
         // Add password strength check
         if (!isStrongPassword(password)) {
             return res.json({ message: "Password must be at least 6 characters long", success: false })
         }
-        
+
         const hashPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
             userName: userName,
@@ -99,9 +99,9 @@ const logout = (req, res) => {
     try {
         res.clearCookie("learn_with_rakib", {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            domain: '.vercel.app',
+            secure: process.env.NODE_ENV === 'production', // Dynamic based on environment
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path: '/',
         });
         res.status(200).json({ message: "Logout successful", success: true });
     } catch (error) {
@@ -157,11 +157,11 @@ const googleLogin = async (req, res) => {
             expiresIn: '24h'
         });
         res.cookie(process.env.COOKIE_NAME, jwtToken, {
-            httpOnly: true,
             maxAge: 86400000,
-            secure: true, // REQUIRED for HTTPS
-            sameSite: 'none', // REQUIRED for cross-site cookies
-            // domain: '.vercel.app', // Allow all vercel subdomains
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Dynamic based on environment
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path: '/',
         });
         res.status(200).json({ message: "Google Login successful", success: true, user });
     } catch (err) {
