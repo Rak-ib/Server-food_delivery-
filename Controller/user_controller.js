@@ -39,9 +39,10 @@ const login = async (req, res) => {
             res.cookie(process.env.COOKIE_NAME, token, {
                 maxAge: 86400000,
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Dynamic based on environment
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                path: '/',
+                secure: process.env.NODE_ENV !== 'development', // true in production
+                sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+                signed: true
+                
             });
             res.status(200).json({ message: "Login successful", success: true, user });
         } else {
@@ -99,9 +100,9 @@ const logout = (req, res) => {
     try {
         res.clearCookie("learn_with_rakib", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Dynamic based on environment
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            path: '/',
+            secure: process.env.NODE_ENV !== 'development', // true in production
+            sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+            signed: true
         });
         res.status(200).json({ message: "Logout successful", success: true });
     } catch (error) {
@@ -159,9 +160,9 @@ const googleLogin = async (req, res) => {
         res.cookie(process.env.COOKIE_NAME, jwtToken, {
             maxAge: 86400000,
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Dynamic based on environment
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-            path: '/',
+            secure: process.env.NODE_ENV !== 'development', // true in production
+            sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+            signed: true
         });
         res.status(200).json({ message: "Google Login successful", success: true, user });
     } catch (err) {
